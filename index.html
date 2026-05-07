@@ -1,0 +1,2045 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HAMZA — Digital Architect</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    /* ============================================================
+       ROOT VARIABLES & RESET
+    ============================================================ */
+    :root {
+      --bg: #030712;
+      --bg2: #060d1f;
+      --surface: rgba(255,255,255,0.035);
+      --surface-hover: rgba(255,255,255,0.065);
+      --border: rgba(255,255,255,0.08);
+      --border-glow: rgba(0,200,255,0.35);
+      --neon: #00c8ff;
+      --neon2: #7b2fff;
+      --neon3: #ff2f6e;
+      --gold: #f5c842;
+      --text: #e8eaf0;
+      --text-dim: #7a8499;
+      --text-muted: #3d4559;
+      --font-display: 'Syne', sans-serif;
+      --font-mono: 'Space Mono', monospace;
+      --font-body: 'Outfit', sans-serif;
+      --radius: 16px;
+      --transition: 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+      --glow-neon: 0 0 20px rgba(0,200,255,0.5), 0 0 60px rgba(0,200,255,0.2);
+      --glow-purple: 0 0 20px rgba(123,47,255,0.5), 0 0 60px rgba(123,47,255,0.15);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html {
+      scroll-behavior: smooth;
+      scrollbar-width: thin;
+      scrollbar-color: var(--neon) var(--bg);
+    }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--neon); border-radius: 99px; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+      cursor: none;
+    }
+
+    body.light-mode {
+      --bg: #f0f4ff;
+      --bg2: #e2e8f8;
+      --surface: rgba(0,0,0,0.04);
+      --surface-hover: rgba(0,0,0,0.08);
+      --border: rgba(0,0,0,0.1);
+      --text: #0a0f1e;
+      --text-dim: #445;
+      --text-muted: #889;
+    }
+
+    /* ============================================================
+       CUSTOM CURSOR
+    ============================================================ */
+    #cursor {
+      position: fixed; top: 0; left: 0;
+      width: 12px; height: 12px;
+      background: var(--neon);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 99999;
+      transform: translate(-50%,-50%);
+      transition: transform 0.1s, width 0.3s, height 0.3s, opacity 0.3s;
+      mix-blend-mode: difference;
+    }
+    #cursor-ring {
+      position: fixed; top: 0; left: 0;
+      width: 36px; height: 36px;
+      border: 1.5px solid rgba(0,200,255,0.5);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 99998;
+      transform: translate(-50%,-50%);
+      transition: transform 0.18s ease, width 0.35s, height 0.35s;
+    }
+    body:hover #cursor { opacity: 1; }
+
+    /* ============================================================
+       LOADING SCREEN
+    ============================================================ */
+    #loader {
+      position: fixed; inset: 0;
+      background: var(--bg);
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 28px;
+      transition: opacity 0.9s ease, visibility 0.9s ease;
+    }
+    #loader.hidden { opacity: 0; visibility: hidden; }
+
+    .loader-logo {
+      font-family: var(--font-display);
+      font-size: clamp(3.5rem, 10vw, 7rem);
+      font-weight: 800;
+      letter-spacing: 0.35em;
+      background: linear-gradient(135deg, var(--neon), var(--neon2), var(--neon3));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: logoGlow 2s ease-in-out infinite alternate;
+    }
+    @keyframes logoGlow {
+      from { filter: drop-shadow(0 0 10px rgba(0,200,255,0.4)); }
+      to   { filter: drop-shadow(0 0 30px rgba(0,200,255,0.8)); }
+    }
+
+    .loader-bar-wrap {
+      width: 260px; height: 2px;
+      background: var(--border);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+    .loader-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--neon), var(--neon2));
+      border-radius: 99px;
+      animation: loadBar 2s ease forwards;
+    }
+    @keyframes loadBar { from { width: 0; } to { width: 100%; } }
+
+    .loader-text {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      color: var(--text-dim);
+      animation: blink 1s step-end infinite;
+    }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    /* ============================================================
+       STICKY NAVBAR
+    ============================================================ */
+    #navbar {
+      position: fixed; top: 0; left: 0; right: 0;
+      z-index: 1000;
+      padding: 0 5%;
+      height: 70px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: background var(--transition), backdrop-filter var(--transition), border-color var(--transition);
+      border-bottom: 1px solid transparent;
+    }
+    #navbar.scrolled {
+      background: rgba(3,7,18,0.75);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom-color: var(--border);
+    }
+
+    .nav-logo {
+      font-family: var(--font-display);
+      font-size: 1.4rem;
+      font-weight: 800;
+      letter-spacing: 0.15em;
+      background: linear-gradient(135deg, var(--neon), var(--neon2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-decoration: none;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 36px;
+      list-style: none;
+    }
+    .nav-links a {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      letter-spacing: 0.12em;
+      text-decoration: none;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      position: relative;
+      padding-bottom: 4px;
+      transition: color var(--transition);
+    }
+    .nav-links a::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0;
+      width: 0; height: 1.5px;
+      background: var(--neon);
+      transition: width var(--transition);
+    }
+    .nav-links a:hover, .nav-links a.active { color: var(--neon); }
+    .nav-links a:hover::after, .nav-links a.active::after { width: 100%; }
+
+    .nav-right { display: flex; align-items: center; gap: 16px; }
+
+    .theme-toggle {
+      width: 44px; height: 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      cursor: pointer;
+      position: relative;
+      transition: background var(--transition);
+    }
+    .theme-toggle::after {
+      content: '';
+      position: absolute;
+      top: 3px; left: 3px;
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: var(--neon);
+      transition: transform var(--transition);
+      box-shadow: var(--glow-neon);
+    }
+    body.light-mode .theme-toggle::after { transform: translateX(20px); }
+
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      cursor: pointer;
+      padding: 4px;
+    }
+    .hamburger span {
+      width: 24px; height: 2px;
+      background: var(--text);
+      border-radius: 2px;
+      transition: var(--transition);
+    }
+    .hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .hamburger.open span:nth-child(2) { opacity: 0; }
+    .hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+    .mobile-menu {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(3,7,18,0.97);
+      backdrop-filter: blur(24px);
+      z-index: 999;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 40px;
+    }
+    .mobile-menu.open { display: flex; }
+    .mobile-menu a {
+      font-family: var(--font-display);
+      font-size: 2.4rem;
+      font-weight: 700;
+      color: var(--text);
+      text-decoration: none;
+      letter-spacing: 0.05em;
+      transition: color var(--transition);
+    }
+    .mobile-menu a:hover { color: var(--neon); }
+
+    /* ============================================================
+       HERO SECTION
+    ============================================================ */
+    #hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    #particles-canvas {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+    }
+
+    .hero-bg-shapes {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+    .shape {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.12;
+      animation: shapeFloat 8s ease-in-out infinite alternate;
+    }
+    .shape-1 { width: 600px; height: 600px; background: var(--neon); top: -200px; right: -200px; animation-delay: 0s; }
+    .shape-2 { width: 400px; height: 400px; background: var(--neon2); bottom: -100px; left: -100px; animation-delay: -3s; }
+    .shape-3 { width: 300px; height: 300px; background: var(--neon3); top: 40%; left: 30%; animation-delay: -5s; }
+    @keyframes shapeFloat {
+      from { transform: translateY(0) scale(1); }
+      to   { transform: translateY(-40px) scale(1.08); }
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      padding: 0 24px;
+      max-width: 900px;
+    }
+
+    .hero-label {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--neon);
+      border: 1px solid rgba(0,200,255,0.25);
+      padding: 6px 18px;
+      border-radius: 99px;
+      margin-bottom: 32px;
+      animation: fadeUp 0.8s ease both;
+      animation-delay: 0.2s;
+    }
+
+    .hero-name {
+      font-family: var(--font-display);
+      font-size: clamp(4.5rem, 14vw, 12rem);
+      font-weight: 800;
+      line-height: 0.9;
+      letter-spacing: -0.02em;
+      margin-bottom: 28px;
+      animation: fadeUp 0.8s ease both;
+      animation-delay: 0.35s;
+    }
+    .hero-name span {
+      background: linear-gradient(135deg, #fff 0%, var(--neon) 50%, var(--neon2) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-typing {
+      font-family: var(--font-mono);
+      font-size: clamp(0.85rem, 2.5vw, 1.1rem);
+      color: var(--text-dim);
+      letter-spacing: 0.08em;
+      min-height: 1.6em;
+      margin-bottom: 52px;
+      animation: fadeUp 0.8s ease both;
+      animation-delay: 0.5s;
+    }
+    .hero-typing .cursor-type {
+      display: inline-block;
+      width: 2px;
+      height: 1.1em;
+      background: var(--neon);
+      vertical-align: middle;
+      margin-left: 3px;
+      animation: blink 0.8s step-end infinite;
+    }
+
+    .hero-buttons {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      flex-wrap: wrap;
+      animation: fadeUp 0.8s ease both;
+      animation-delay: 0.65s;
+    }
+
+    .btn {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 14px 36px;
+      border-radius: 99px;
+      text-decoration: none;
+      cursor: pointer;
+      transition: var(--transition);
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--neon), var(--neon2));
+      color: #fff;
+      box-shadow: 0 0 30px rgba(0,200,255,0.3);
+    }
+    .btn-primary:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 0 50px rgba(0,200,255,0.6), 0 20px 40px rgba(0,200,255,0.15);
+    }
+    .btn-ghost {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+      backdrop-filter: blur(10px);
+    }
+    .btn-ghost:hover {
+      border-color: var(--neon);
+      color: var(--neon);
+      transform: translateY(-3px);
+      box-shadow: var(--glow-neon);
+    }
+
+    .hero-scroll-hint {
+      position: absolute;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      animation: bounce 2s ease-in-out infinite;
+    }
+    .hero-scroll-hint span {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      letter-spacing: 0.2em;
+      color: var(--text-muted);
+    }
+    .scroll-line {
+      width: 1px;
+      height: 60px;
+      background: linear-gradient(to bottom, var(--neon), transparent);
+    }
+    @keyframes bounce {
+      0%,100% { transform: translateX(-50%) translateY(0); }
+      50%      { transform: translateX(-50%) translateY(10px); }
+    }
+
+    /* ============================================================
+       SECTION COMMONS
+    ============================================================ */
+    section {
+      padding: clamp(80px, 12vw, 140px) 5%;
+      position: relative;
+    }
+
+    .section-label {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--neon);
+      margin-bottom: 16px;
+      display: block;
+    }
+
+    .section-title {
+      font-family: var(--font-display);
+      font-size: clamp(2.2rem, 5vw, 4rem);
+      font-weight: 800;
+      line-height: 1.05;
+      margin-bottom: 20px;
+    }
+
+    .section-subtitle {
+      font-size: 1.05rem;
+      color: var(--text-dim);
+      max-width: 560px;
+      line-height: 1.8;
+    }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
+
+    /* Reveal on scroll */
+    .reveal {
+      opacity: 0;
+      transform: translateY(50px);
+      transition: opacity 0.8s ease, transform 0.8s ease;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Delay helpers */
+    .d1 { transition-delay: 0.1s; }
+    .d2 { transition-delay: 0.2s; }
+    .d3 { transition-delay: 0.3s; }
+    .d4 { transition-delay: 0.4s; }
+    .d5 { transition-delay: 0.5s; }
+    .d6 { transition-delay: 0.6s; }
+
+    /* Divider */
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border), transparent);
+      margin: 0 5%;
+    }
+
+    /* Glass Card */
+    .glass-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      transition: var(--transition);
+    }
+    .glass-card:hover {
+      background: var(--surface-hover);
+      border-color: rgba(0,200,255,0.2);
+      transform: translateY(-6px);
+      box-shadow: 0 30px 60px rgba(0,0,0,0.4), 0 0 40px rgba(0,200,255,0.08);
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ============================================================
+       ABOUT SECTION
+    ============================================================ */
+    #about { background: var(--bg2); }
+
+    .about-text p {
+      font-size: 1.05rem;
+      color: var(--text-dim);
+      line-height: 1.9;
+      margin-bottom: 20px;
+    }
+    .about-text p strong { color: var(--text); }
+
+    .about-highlight {
+      font-family: var(--font-display);
+      font-size: clamp(1.6rem, 3vw, 2.4rem);
+      font-weight: 700;
+      line-height: 1.3;
+      color: var(--text);
+      margin-bottom: 32px;
+    }
+    .about-highlight em {
+      font-style: normal;
+      background: linear-gradient(135deg, var(--neon), var(--neon2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .about-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 28px;
+    }
+    .tag {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      letter-spacing: 0.1em;
+      padding: 6px 14px;
+      border-radius: 99px;
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      transition: var(--transition);
+    }
+    .tag:hover { border-color: var(--neon); color: var(--neon); }
+
+    /* Stats */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      margin-top: 40px;
+    }
+    .stat-card {
+      padding: 28px 24px;
+      text-align: center;
+    }
+    .stat-number {
+      font-family: var(--font-display);
+      font-size: clamp(2.4rem, 5vw, 3.5rem);
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--neon), var(--neon2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+    .stat-label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    /* ============================================================
+       TIMELINE SECTION
+    ============================================================ */
+    #timeline { background: var(--bg); }
+
+    .timeline-wrap {
+      max-width: 780px;
+      margin: 60px auto 0;
+      position: relative;
+    }
+    .timeline-wrap::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 0; bottom: 0;
+      width: 1px;
+      background: linear-gradient(to bottom, transparent, var(--neon), var(--neon2), transparent);
+      transform: translateX(-50%);
+    }
+
+    .timeline-item {
+      position: relative;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      margin-bottom: 56px;
+    }
+    .timeline-item:nth-child(odd) .tl-card { grid-column: 1; }
+    .timeline-item:nth-child(odd) .tl-spacer { grid-column: 2; }
+    .timeline-item:nth-child(even) .tl-card { grid-column: 2; grid-row: 1; }
+    .timeline-item:nth-child(even) .tl-spacer { grid-column: 1; grid-row: 1; }
+
+    .tl-card {
+      padding: 28px;
+      position: relative;
+    }
+    .tl-icon {
+      font-size: 1.8rem;
+      margin-bottom: 12px;
+      display: block;
+    }
+    .tl-year {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      color: var(--neon);
+      margin-bottom: 8px;
+    }
+    .tl-title {
+      font-family: var(--font-display);
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+    .tl-desc {
+      font-size: 0.9rem;
+      color: var(--text-dim);
+      line-height: 1.7;
+    }
+
+    .tl-dot {
+      position: absolute;
+      left: 50%;
+      top: 28px;
+      transform: translateX(-50%);
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--neon);
+      box-shadow: var(--glow-neon);
+      z-index: 2;
+    }
+
+    /* ============================================================
+       DEPARTMENTS SECTION
+    ============================================================ */
+    #departments { background: var(--bg2); }
+
+    .dept-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 24px;
+      margin-top: 60px;
+    }
+
+    .dept-card {
+      padding: 36px 30px;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+    .dept-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, var(--neon-card, rgba(0,200,255,0.06)), transparent);
+      opacity: 0;
+      transition: opacity var(--transition);
+    }
+    .dept-card:hover::before { opacity: 1; }
+
+    .dept-icon {
+      font-size: 2.8rem;
+      margin-bottom: 20px;
+      display: block;
+      transition: transform var(--transition);
+    }
+    .dept-card:hover .dept-icon { transform: scale(1.15) rotate(-5deg); }
+
+    .dept-title {
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+    .dept-desc {
+      font-size: 0.88rem;
+      color: var(--text-dim);
+      line-height: 1.7;
+    }
+
+    .dept-arrow {
+      position: absolute;
+      bottom: 24px;
+      right: 24px;
+      font-size: 1.2rem;
+      color: var(--neon);
+      opacity: 0;
+      transform: translateX(-8px);
+      transition: var(--transition);
+    }
+    .dept-card:hover .dept-arrow { opacity: 1; transform: translateX(0); }
+
+    /* Department Modal */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(3,7,18,0.88);
+      backdrop-filter: blur(20px);
+      z-index: 5000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      opacity: 0;
+      visibility: hidden;
+      transition: var(--transition);
+    }
+    .modal-overlay.open { opacity: 1; visibility: visible; }
+
+    .modal-box {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      max-width: 560px;
+      width: 100%;
+      padding: 48px;
+      position: relative;
+      transform: scale(0.9);
+      transition: transform var(--transition);
+    }
+    .modal-overlay.open .modal-box { transform: scale(1); }
+
+    .modal-close {
+      position: absolute;
+      top: 20px; right: 20px;
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      font-size: 1.1rem;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition);
+    }
+    .modal-close:hover { background: var(--neon3); border-color: var(--neon3); }
+
+    .modal-icon { font-size: 3.5rem; margin-bottom: 20px; }
+    .modal-title {
+      font-family: var(--font-display);
+      font-size: 1.8rem;
+      font-weight: 800;
+      margin-bottom: 16px;
+    }
+    .modal-body {
+      font-size: 0.95rem;
+      color: var(--text-dim);
+      line-height: 1.9;
+    }
+    .modal-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 24px;
+    }
+
+    /* ============================================================
+       BLOG SECTION
+    ============================================================ */
+    #blogs { background: var(--bg); }
+
+    .blog-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+      gap: 28px;
+      margin-top: 60px;
+    }
+
+    .blog-card {
+      overflow: hidden;
+      cursor: pointer;
+    }
+    .blog-thumb {
+      height: 200px;
+      position: relative;
+      overflow: hidden;
+    }
+    .blog-thumb-inner {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, var(--c1, #0a1628), var(--c2, #0d2347));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 4rem;
+      transition: transform var(--transition);
+    }
+    .blog-card:hover .blog-thumb-inner { transform: scale(1.08); }
+    .blog-cat {
+      position: absolute;
+      top: 16px; left: 16px;
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      background: rgba(0,200,255,0.15);
+      color: var(--neon);
+      border: 1px solid rgba(0,200,255,0.25);
+      padding: 4px 12px;
+      border-radius: 99px;
+    }
+    .blog-body { padding: 28px 24px; }
+    .blog-date {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+    .blog-title {
+      font-family: var(--font-display);
+      font-size: 1.15rem;
+      font-weight: 700;
+      line-height: 1.35;
+      margin-bottom: 12px;
+      transition: color var(--transition);
+    }
+    .blog-card:hover .blog-title { color: var(--neon); }
+    .blog-excerpt {
+      font-size: 0.87rem;
+      color: var(--text-dim);
+      line-height: 1.7;
+      margin-bottom: 20px;
+    }
+    .blog-read-more {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--neon);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: gap var(--transition);
+    }
+    .blog-card:hover .blog-read-more { gap: 12px; }
+
+    /* ============================================================
+       GALLERY SECTION
+    ============================================================ */
+    #gallery { background: var(--bg2); }
+
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 16px;
+      margin-top: 60px;
+    }
+
+    .gallery-item {
+      border-radius: var(--radius);
+      overflow: hidden;
+      cursor: pointer;
+      position: relative;
+      aspect-ratio: 1;
+    }
+    .gallery-item:nth-child(3n+1) { grid-row: span 2; aspect-ratio: unset; }
+    .gallery-inner {
+      width: 100%;
+      height: 100%;
+      min-height: 220px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3.5rem;
+      transition: transform var(--transition);
+    }
+    .gallery-item:hover .gallery-inner { transform: scale(1.07); }
+    .gallery-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,200,255,0.08);
+      opacity: 0;
+      transition: opacity var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      color: #fff;
+    }
+    .gallery-item:hover .gallery-overlay { opacity: 1; }
+
+    /* Lightbox */
+    #lightbox {
+      position: fixed; inset: 0;
+      background: rgba(3,7,18,0.95);
+      z-index: 6000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: var(--transition);
+    }
+    #lightbox.open { opacity: 1; visibility: visible; }
+    .lightbox-content {
+      max-width: 600px;
+      width: 90%;
+      text-align: center;
+    }
+    .lightbox-emoji { font-size: 8rem; margin-bottom: 20px; }
+    .lightbox-title {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .lightbox-close {
+      position: absolute;
+      top: 24px; right: 24px;
+      font-size: 2rem;
+      color: var(--text);
+      cursor: pointer;
+      transition: color var(--transition);
+    }
+    .lightbox-close:hover { color: var(--neon3); }
+
+    /* ============================================================
+       CONTACT SECTION
+    ============================================================ */
+    #contact { background: var(--bg); }
+
+    .contact-wrap {
+      max-width: 680px;
+      margin: 60px auto 0;
+    }
+
+    .form-group {
+      position: relative;
+      margin-bottom: 28px;
+    }
+    .form-input, .form-textarea {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 20px 8px;
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 0.95rem;
+      outline: none;
+      transition: var(--transition);
+      resize: none;
+    }
+    .form-textarea { min-height: 140px; padding-top: 28px; }
+    .form-input:focus, .form-textarea:focus {
+      border-color: var(--neon);
+      box-shadow: 0 0 0 3px rgba(0,200,255,0.1);
+    }
+    .form-label {
+      position: absolute;
+      top: 50%;
+      left: 20px;
+      transform: translateY(-50%);
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      pointer-events: none;
+      transition: var(--transition);
+    }
+    .form-group.textarea-group .form-label { top: 22px; transform: none; }
+    .form-input:focus + .form-label,
+    .form-input:not(:placeholder-shown) + .form-label {
+      top: 10px;
+      font-size: 0.6rem;
+      color: var(--neon);
+    }
+    .form-textarea:focus + .form-label,
+    .form-textarea:not(:placeholder-shown) + .form-label {
+      font-size: 0.6rem;
+      color: var(--neon);
+      top: 8px;
+    }
+    .form-input::placeholder, .form-textarea::placeholder { color: transparent; }
+
+    .form-error {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.08em;
+      color: var(--neon3);
+      margin-top: 6px;
+      display: none;
+    }
+    .form-group.error .form-error { display: block; }
+    .form-group.error .form-input,
+    .form-group.error .form-textarea { border-color: var(--neon3); }
+
+    .submit-btn {
+      width: 100%;
+      padding: 18px;
+      background: linear-gradient(135deg, var(--neon), var(--neon2));
+      border: none;
+      border-radius: 12px;
+      color: #fff;
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+    .submit-btn::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(255,255,255,0.15);
+      transform: translateX(-100%);
+      transition: transform 0.4s ease;
+    }
+    .submit-btn:hover::after { transform: translateX(100%); }
+    .submit-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 20px 40px rgba(0,200,255,0.3);
+    }
+    .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    .success-msg {
+      text-align: center;
+      padding: 32px;
+      display: none;
+    }
+    .success-msg.show { display: block; }
+    .success-emoji { font-size: 4rem; margin-bottom: 16px; }
+    .success-msg h3 { font-family: var(--font-display); font-size: 1.5rem; margin-bottom: 8px; color: var(--neon); }
+    .success-msg p { color: var(--text-dim); font-size: 0.92rem; }
+
+    /* ============================================================
+       FOOTER
+    ============================================================ */
+    footer {
+      background: var(--bg2);
+      border-top: 1px solid var(--border);
+      padding: 60px 5% 40px;
+    }
+
+    .footer-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 48px;
+      flex-wrap: wrap;
+      gap: 40px;
+    }
+
+    .footer-logo {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: 0.15em;
+      background: linear-gradient(135deg, var(--neon), var(--neon2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .footer-tagline {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      color: var(--text-muted);
+      margin-top: 8px;
+    }
+
+    .social-links {
+      display: flex;
+      gap: 14px;
+    }
+    .social-link {
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      font-size: 1.1rem;
+      transition: var(--transition);
+    }
+    .social-link:hover {
+      border-color: var(--neon);
+      background: rgba(0,200,255,0.1);
+      transform: translateY(-3px);
+      box-shadow: var(--glow-neon);
+    }
+
+    .footer-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .footer-copy {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+    }
+
+    /* Back to top */
+    #back-top {
+      position: fixed;
+      bottom: 36px;
+      right: 36px;
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--neon), var(--neon2));
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      color: #fff;
+      z-index: 800;
+      transition: var(--transition);
+      opacity: 0;
+      transform: translateY(20px);
+      box-shadow: var(--glow-neon);
+    }
+    #back-top.visible { opacity: 1; transform: translateY(0); }
+    #back-top:hover { transform: translateY(-4px) scale(1.08); }
+
+    /* ============================================================
+       MOUSE GLOW
+    ============================================================ */
+    #mouse-glow {
+      position: fixed;
+      top: 0; left: 0;
+      width: 400px; height: 400px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0,200,255,0.055) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+      transform: translate(-50%, -50%);
+      transition: left 0.15s ease, top 0.15s ease;
+    }
+
+    /* ============================================================
+       RESPONSIVE
+    ============================================================ */
+    @media (max-width: 900px) {
+      .grid-2 { grid-template-columns: 1fr; gap: 48px; }
+      .grid-3 { grid-template-columns: 1fr 1fr; }
+      .nav-links { display: none; }
+      .hamburger { display: flex; }
+      .timeline-wrap::before { left: 24px; }
+      .timeline-item { grid-template-columns: 1fr; padding-left: 56px; }
+      .timeline-item:nth-child(odd) .tl-card,
+      .timeline-item:nth-child(even) .tl-card { grid-column: 1; }
+      .timeline-item:nth-child(odd) .tl-spacer,
+      .timeline-item:nth-child(even) .tl-spacer { display: none; }
+      .tl-dot { left: 0; top: 28px; transform: none; }
+    }
+    @media (max-width: 600px) {
+      .grid-3 { grid-template-columns: 1fr; }
+      .grid-4 { grid-template-columns: 1fr 1fr; }
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+      .footer-top { flex-direction: column; }
+      .hero-name { font-size: clamp(3.5rem, 16vw, 5rem); }
+      #back-top { bottom: 20px; right: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ============================================================
+     MOUSE GLOW & CURSOR
+============================================================ -->
+<div id="mouse-glow"></div>
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
+
+<!-- ============================================================
+     LOADING SCREEN
+============================================================ -->
+<div id="loader">
+  <div class="loader-logo">HAMZA</div>
+  <div class="loader-bar-wrap">
+    <div class="loader-bar"></div>
+  </div>
+  <div class="loader-text">Initializing Digital Universe...</div>
+</div>
+
+<!-- ============================================================
+     MOBILE MENU
+============================================================ -->
+<div class="mobile-menu" id="mobileMenu">
+  <a href="#hero" onclick="closeMobile()">Home</a>
+  <a href="#about" onclick="closeMobile()">About</a>
+  <a href="#timeline" onclick="closeMobile()">Timeline</a>
+  <a href="#departments" onclick="closeMobile()">Departments</a>
+  <a href="#blogs" onclick="closeMobile()">Blogs</a>
+  <a href="#gallery" onclick="closeMobile()">Gallery</a>
+  <a href="#contact" onclick="closeMobile()">Contact</a>
+</div>
+
+<!-- ============================================================
+     NAVBAR
+============================================================ -->
+<nav id="navbar">
+  <a href="#hero" class="nav-logo">HMZ</a>
+  <ul class="nav-links">
+    <li><a href="#hero" class="active">Home</a></li>
+    <li><a href="#about">About</a></li>
+    <li><a href="#timeline">Timeline</a></li>
+    <li><a href="#departments">Departments</a></li>
+    <li><a href="#blogs">Blogs</a></li>
+    <li><a href="#gallery">Gallery</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+  <div class="nav-right">
+    <button class="theme-toggle" id="themeToggle" title="Toggle light/dark mode"></button>
+    <div class="hamburger" id="hamburger" onclick="toggleMobile()">
+      <span></span><span></span><span></span>
+    </div>
+  </div>
+</nav>
+
+<!-- ============================================================
+     HERO SECTION
+============================================================ -->
+<section id="hero">
+  <canvas id="particles-canvas"></canvas>
+  <div class="hero-bg-shapes">
+    <div class="shape shape-1"></div>
+    <div class="shape shape-2"></div>
+    <div class="shape shape-3"></div>
+  </div>
+  <div class="hero-content">
+    <div class="hero-label">⚡ Digital Architect &amp; Creative Mind</div>
+    <h1 class="hero-name"><span>HAMZA</span></h1>
+    <p class="hero-typing" id="typingText"><span class="cursor-type"></span></p>
+    <div class="hero-buttons">
+      <a href="#timeline" class="btn btn-primary">Explore Journey →</a>
+      <a href="#blogs" class="btn btn-ghost">Read Blogs</a>
+    </div>
+  </div>
+  <div class="hero-scroll-hint">
+    <span>Scroll</span>
+    <div class="scroll-line"></div>
+  </div>
+</section>
+
+<!-- ============================================================
+     ABOUT SECTION
+============================================================ -->
+<section id="about">
+  <div class="grid-2">
+    <div class="reveal">
+      <span class="section-label">// About Me</span>
+      <h2 class="section-title">A Mind That Never Stops <em style="font-style:normal; background:linear-gradient(135deg,var(--neon),var(--neon2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Questioning</em></h2>
+      <p class="about-highlight">
+        Driven by <em>curiosity</em> and fuelled by the<br>
+        desire to understand the world.
+      </p>
+      <div class="about-text">
+        <p>I'm Hamza — a <strong>blogger, thinker, and technology learner</strong> who believes every idea deserves a platform. My digital journey started with a single question: <em>how does this all work?</em></p>
+        <p>From the cosmos to code, from philosophy to practical web development, I explore the spectrum of human knowledge. This website is my <strong>living archive</strong> — a record of where I've been, what I've thought, and where I'm headed.</p>
+        <p>I believe in <strong>self-growth</strong>, the power of consistent learning, and the idea that creativity is the highest form of intelligence. Every blog post, every project, every experiment is a step forward.</p>
+      </div>
+      <div class="about-tags">
+        <span class="tag">Blogger</span>
+        <span class="tag">Science Enthusiast</span>
+        <span class="tag">Web Dev</span>
+        <span class="tag">Creative Writer</span>
+        <span class="tag">Philosopher</span>
+        <span class="tag">Tech Learner</span>
+        <span class="tag">Deep Thinker</span>
+        <span class="tag">Futurist</span>
+      </div>
+    </div>
+    <div class="reveal d2">
+      <div class="stats-grid">
+        <div class="glass-card stat-card">
+          <div class="stat-number" data-target="47" data-suffix="+">0</div>
+          <div class="stat-label">Blogs Written</div>
+        </div>
+        <div class="glass-card stat-card">
+          <div class="stat-number" data-target="12" data-suffix="+">0</div>
+          <div class="stat-label">Projects Built</div>
+        </div>
+        <div class="glass-card stat-card">
+          <div class="stat-number" data-target="1200" data-suffix="+">0</div>
+          <div class="stat-label">Learning Hours</div>
+        </div>
+        <div class="glass-card stat-card">
+          <div class="stat-number" data-target="300" data-suffix="+">0</div>
+          <div class="stat-label">Ideas Created</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ============================================================
+     TIMELINE SECTION
+============================================================ -->
+<section id="timeline">
+  <div style="text-align:center; margin-bottom:0;">
+    <span class="section-label" style="display:block; text-align:center;">// Journey</span>
+    <h2 class="section-title" style="text-align:center;">The Story So Far</h2>
+    <p class="section-subtitle" style="margin:0 auto; text-align:center;">Every great journey begins with a single spark of curiosity.</p>
+  </div>
+  <div class="timeline-wrap">
+    <!-- Item 1 -->
+    <div class="timeline-item reveal">
+      <div class="tl-card glass-card">
+        <span class="tl-icon">🌱</span>
+        <div class="tl-year">Early Years</div>
+        <div class="tl-title">Childhood Curiosity</div>
+        <p class="tl-desc">Born with an insatiable need to understand the "why" behind everything. Books, stars, and nature were my first teachers. The universe felt like a puzzle built just for me.</p>
+      </div>
+      <div class="tl-spacer"></div>
+      <div class="tl-dot"></div>
+    </div>
+    <!-- Item 2 -->
+    <div class="timeline-item reveal d1">
+      <div class="tl-spacer"></div>
+      <div class="tl-card glass-card">
+        <span class="tl-icon">📚</span>
+        <div class="tl-year">School Years</div>
+        <div class="tl-title">The Academic Awakening</div>
+        <p class="tl-desc">School gave me structure, but my real education happened outside the textbooks. Science fairs, writing competitions, and late-night reading sessions shaped a curious intellect.</p>
+      </div>
+      <div class="tl-dot"></div>
+    </div>
+    <!-- Item 3 -->
+    <div class="timeline-item reveal d2">
+      <div class="tl-card glass-card">
+        <span class="tl-icon">🌐</span>
+        <div class="tl-year">Discovery Era</div>
+        <div class="tl-title">First Internet Experience</div>
+        <p class="tl-desc">The internet opened a universe within a universe. Suddenly every question had a potential answer. I spent hours exploring science forums, philosophy debates, and technology blogs.</p>
+      </div>
+      <div class="tl-spacer"></div>
+      <div class="tl-dot"></div>
+    </div>
+    <!-- Item 4 -->
+    <div class="timeline-item reveal d3">
+      <div class="tl-spacer"></div>
+      <div class="tl-card glass-card">
+        <span class="tl-icon">💻</span>
+        <div class="tl-year">Tech Era</div>
+        <div class="tl-title">Learning Web Development</div>
+        <p class="tl-desc">HTML, CSS, JavaScript — the languages of the web became my new vocabulary. I discovered that coding is not just logic; it's creative expression in its purest digital form.</p>
+      </div>
+      <div class="tl-dot"></div>
+    </div>
+    <!-- Item 5 -->
+    <div class="timeline-item reveal d4">
+      <div class="tl-card glass-card">
+        <span class="tl-icon">✍️</span>
+        <div class="tl-year">Creative Era</div>
+        <div class="tl-title">Blogging Begins</div>
+        <p class="tl-desc">Words became my weapon of choice. I started writing about science, technology, human psychology, and my own philosophy. Each post became a conversation with the world.</p>
+      </div>
+      <div class="tl-spacer"></div>
+      <div class="tl-dot"></div>
+    </div>
+    <!-- Item 6 -->
+    <div class="timeline-item reveal d5">
+      <div class="tl-spacer"></div>
+      <div class="tl-card glass-card">
+        <span class="tl-icon">🚀</span>
+        <div class="tl-year">Now &amp; Beyond</div>
+        <div class="tl-title">Building the Future</div>
+        <p class="tl-desc">The mission is clear: build, create, inspire. I'm working on larger digital projects, expanding my blogging reach, and exploring the intersection of AI, philosophy, and human potential.</p>
+      </div>
+      <div class="tl-dot"></div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ============================================================
+     DEPARTMENTS SECTION
+============================================================ -->
+<section id="departments">
+  <span class="section-label">// Departments</span>
+  <h2 class="section-title">Explore My Worlds</h2>
+  <p class="section-subtitle">Each department is a different dimension of how I think, create, and explore.</p>
+  <div class="dept-grid">
+    <div class="glass-card dept-card reveal" onclick="openModal('science')" style="--neon-card: rgba(0,200,255,0.08)">
+      <span class="dept-icon">🔬</span>
+      <div class="dept-title">Science Department</div>
+      <p class="dept-desc">From quantum mechanics to biology — exploring the fundamental laws that govern our reality.</p>
+      <span class="dept-arrow">→</span>
+    </div>
+    <div class="glass-card dept-card reveal d1" onclick="openModal('tech')" style="--neon-card: rgba(123,47,255,0.08)">
+      <span class="dept-icon">⚙️</span>
+      <div class="dept-title">Technology Department</div>
+      <p class="dept-desc">AI, web development, emerging tech — navigating the digital frontier with curiosity and code.</p>
+      <span class="dept-arrow">→</span>
+    </div>
+    <div class="glass-card dept-card reveal d2" onclick="openModal('philosophy')" style="--neon-card: rgba(255,47,110,0.08)">
+      <span class="dept-icon">🧠</span>
+      <div class="dept-title">Philosophy Department</div>
+      <p class="dept-desc">Consciousness, ethics, existence — wrestling with the deepest questions of the human experience.</p>
+      <span class="dept-arrow">→</span>
+    </div>
+    <div class="glass-card dept-card reveal d3" onclick="openModal('writing')" style="--neon-card: rgba(245,200,66,0.08)">
+      <span class="dept-icon">✍️</span>
+      <div class="dept-title">Creative Writing</div>
+      <p class="dept-desc">Stories, essays, poetry — where imagination transforms into language that moves people.</p>
+      <span class="dept-arrow">→</span>
+    </div>
+    <div class="glass-card dept-card reveal d4" onclick="openModal('webdev')" style="--neon-card: rgba(0,200,255,0.08)">
+      <span class="dept-icon">🌐</span>
+      <div class="dept-title">Web Development</div>
+      <p class="dept-desc">HTML, CSS, JavaScript and beyond — crafting digital experiences that are both beautiful and functional.</p>
+      <span class="dept-arrow">→</span>
+    </div>
+    <div class="glass-card dept-card reveal d5" onclick="openModal('thoughts')" style="--neon-card: rgba(0,255,180,0.08)">
+      <span class="dept-icon">💭</span>
+      <div class="dept-title">Personal Thoughts</div>
+      <p class="dept-desc">Unfiltered reflections on life, growth, society, and the relentless pursuit of a meaningful existence.</p>
+      <span class="dept-arrow">→</span>
+    </div>
+  </div>
+</section>
+
+<!-- Department Modal -->
+<div class="modal-overlay" id="deptModal" onclick="closeModal(event)">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModalBtn()">✕</button>
+    <div class="modal-icon" id="modalIcon"></div>
+    <h3 class="modal-title" id="modalTitle"></h3>
+    <p class="modal-body" id="modalBody"></p>
+    <div class="modal-tags" id="modalTags"></div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ============================================================
+     BLOGS SECTION
+============================================================ -->
+<section id="blogs">
+  <span class="section-label">// Blog</span>
+  <h2 class="section-title">Words From My Universe</h2>
+  <p class="section-subtitle">Thoughts, discoveries, and ideas — written for those who dare to think differently.</p>
+  <div class="blog-grid">
+    <div class="glass-card blog-card reveal">
+      <div class="blog-thumb">
+        <div class="blog-thumb-inner" style="background:linear-gradient(135deg,#020b1a,#041433);">🌌</div>
+        <span class="blog-cat">Science</span>
+      </div>
+      <div class="blog-body">
+        <div class="blog-date">March 12, 2025</div>
+        <h3 class="blog-title">The Dark Energy Problem: What 68% of the Universe Actually Is</h3>
+        <p class="blog-excerpt">Scientists know it exists, they can measure its effects — but no one truly understands what dark energy is. A deep dive into cosmology's greatest mystery.</p>
+        <span class="blog-read-more">Read Article →</span>
+      </div>
+    </div>
+    <div class="glass-card blog-card reveal d1">
+      <div class="blog-thumb">
+        <div class="blog-thumb-inner" style="background:linear-gradient(135deg,#0a0520,#1a0538);">🤖</div>
+        <span class="blog-cat">Artificial Intelligence</span>
+      </div>
+      <div class="blog-body">
+        <div class="blog-date">April 3, 2025</div>
+        <h3 class="blog-title">Will AI Ever Truly Think? The Consciousness Paradox</h3>
+        <p class="blog-excerpt">We've built machines that can write, draw, and reason — but can they feel? Exploring the philosophical border between intelligence and consciousness.</p>
+        <span class="blog-read-more">Read Article →</span>
+      </div>
+    </div>
+    <div class="glass-card blog-card reveal d2">
+      <div class="blog-thumb">
+        <div class="blog-thumb-inner" style="background:linear-gradient(135deg,#0f1a08,#1a3010);">🧬</div>
+        <span class="blog-cat">Human Psychology</span>
+      </div>
+      <div class="blog-body">
+        <div class="blog-date">April 28, 2025</div>
+        <h3 class="blog-title">Why Your Brain Lies to You — and How to Catch It</h3>
+        <p class="blog-excerpt">Cognitive biases aren't bugs in human thinking — they're features. Understanding them is the first step to thinking more clearly and living better.</p>
+        <span class="blog-read-more">Read Article →</span>
+      </div>
+    </div>
+    <div class="glass-card blog-card reveal d3">
+      <div class="blog-thumb">
+        <div class="blog-thumb-inner" style="background:linear-gradient(135deg,#1a0808,#380a0a);">🌍</div>
+        <span class="blog-cat">Technology</span>
+      </div>
+      <div class="blog-body">
+        <div class="blog-date">May 5, 2025</div>
+        <h3 class="blog-title">The Internet Was Supposed to Free Us. What Happened?</h3>
+        <p class="blog-excerpt">The original promise of the internet was radical freedom of information. Tracing what changed — and how we can reclaim the web's original spirit.</p>
+        <span class="blog-read-more">Read Article →</span>
+      </div>
+    </div>
+    <div class="glass-card blog-card reveal d4">
+      <div class="blog-thumb">
+        <div class="blog-thumb-inner" style="background:linear-gradient(135deg,#0a1020,#101828);">🪐</div>
+        <span class="blog-cat">Universe</span>
+      </div>
+      <div class="blog-body">
+        <div class="blog-date">May 18, 2025</div>
+        <h3 class="blog-title">Are We Alone? The Fermi Paradox Revisited</h3>
+        <p class="blog-excerpt">The universe is 13.8 billion years old and unimaginably vast. So where is everyone? Revisiting one of science's most haunting unsolved questions.</p>
+        <span class="blog-read-more">Read Article →</span>
+      </div>
+    </div>
+    <div class="glass-card blog-card reveal d5">
+      <div class="blog-thumb">
+        <div class="blog-thumb-inner" style="background:linear-gradient(135deg,#0a1510,#0d2218);">🌱</div>
+        <span class="blog-cat">Personal Growth</span>
+      </div>
+      <div class="blog-body">
+        <div class="blog-date">June 1, 2025</div>
+        <h3 class="blog-title">The Compound Effect of Learning: Why 30 Minutes a Day Changes Everything</h3>
+        <p class="blog-excerpt">Consistency isn't glamorous. But over time, small daily investments in learning create an intellectual compound interest that rewires who you are.</p>
+        <span class="blog-read-more">Read Article →</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ============================================================
+     GALLERY SECTION
+============================================================ -->
+<section id="gallery">
+  <span class="section-label">// Gallery</span>
+  <h2 class="section-title">Visual Universe</h2>
+  <p class="section-subtitle">Moments, ideas, and inspirations captured in pixels.</p>
+  <div class="gallery-grid" id="galleryGrid"></div>
+</section>
+
+<!-- Lightbox -->
+<div id="lightbox" onclick="closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+  <div class="lightbox-content">
+    <div class="lightbox-emoji" id="lbEmoji"></div>
+    <div class="lightbox-title" id="lbTitle"></div>
+    <p style="color:var(--text-dim); font-size:0.9rem;" id="lbDesc"></p>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ============================================================
+     CONTACT SECTION
+============================================================ -->
+<section id="contact">
+  <div style="text-align:center; margin-bottom:0;">
+    <span class="section-label" style="display:block; text-align:center;">// Contact</span>
+    <h2 class="section-title" style="text-align:center;">Let's Build Something</h2>
+    <p class="section-subtitle" style="text-align:center; margin:0 auto 0;">Have an idea? A question? Or just want to say hello? I'm all ears.</p>
+  </div>
+  <div class="contact-wrap reveal">
+    <div id="contactForm">
+      <div class="form-group" id="fgName">
+        <input type="text" class="form-input" id="inputName" placeholder="Your Name" />
+        <label class="form-label" for="inputName">Your Name</label>
+        <span class="form-error">Please enter your name.</span>
+      </div>
+      <div class="form-group" id="fgEmail">
+        <input type="email" class="form-input" id="inputEmail" placeholder="Your Email" />
+        <label class="form-label" for="inputEmail">Email Address</label>
+        <span class="form-error">Please enter a valid email.</span>
+      </div>
+      <div class="form-group textarea-group" id="fgMsg">
+        <textarea class="form-textarea" id="inputMsg" placeholder="Your Message"></textarea>
+        <label class="form-label" for="inputMsg">Your Message</label>
+        <span class="form-error">Please write a message.</span>
+      </div>
+      <button class="submit-btn" id="submitBtn" onclick="submitForm()">
+        Send Message ✦
+      </button>
+    </div>
+    <div class="success-msg" id="successMsg">
+      <div class="success-emoji">🚀</div>
+      <h3>Message Sent!</h3>
+      <p>Thank you for reaching out. I'll get back to you soon through the stars.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     FOOTER
+============================================================ -->
+<footer>
+  <div class="footer-top">
+    <div>
+      <div class="footer-logo">HAMZA</div>
+      <div class="footer-tagline">// Blogger • Thinker • Creator • Futurist</div>
+    </div>
+    <div>
+      <div class="social-links">
+        <a href="#" class="social-link" title="Twitter / X">𝕏</a>
+        <a href="#" class="social-link" title="LinkedIn">in</a>
+        <a href="#" class="social-link" title="GitHub">gh</a>
+        <a href="#" class="social-link" title="Instagram">ig</a>
+        <a href="#" class="social-link" title="YouTube">▶</a>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span class="footer-copy">© 2025 Hamza. All rights reserved. Built with passion &amp; curiosity.</span>
+    <span class="footer-copy" style="color:var(--neon);">Made by Hamza ✦</span>
+  </div>
+</footer>
+
+<!-- Back to Top -->
+<button id="back-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<!-- ============================================================
+     JAVASCRIPT
+============================================================ -->
+<script>
+/* ============================================================
+   LOADER
+============================================================ */
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    document.getElementById('loader').classList.add('hidden');
+  }, 2200);
+});
+
+/* ============================================================
+   CUSTOM CURSOR
+============================================================ */
+const cursor = document.getElementById('cursor');
+const cursorRing = document.getElementById('cursor-ring');
+const mouseGlow = document.getElementById('mouse-glow');
+
+let mx = 0, my = 0, rx = 0, ry = 0;
+document.addEventListener('mousemove', e => {
+  mx = e.clientX; my = e.clientY;
+  cursor.style.left = mx + 'px';
+  cursor.style.top  = my + 'px';
+  mouseGlow.style.left = mx + 'px';
+  mouseGlow.style.top  = my + 'px';
+});
+
+function lerpCursorRing() {
+  rx += (mx - rx) * 0.12;
+  ry += (my - ry) * 0.12;
+  cursorRing.style.left = rx + 'px';
+  cursorRing.style.top  = ry + 'px';
+  requestAnimationFrame(lerpCursorRing);
+}
+lerpCursorRing();
+
+document.querySelectorAll('a, button, .glass-card, .dept-card, .gallery-item').forEach(el => {
+  el.addEventListener('mouseenter', () => {
+    cursor.style.width = '24px';
+    cursor.style.height = '24px';
+    cursorRing.style.width = '60px';
+    cursorRing.style.height = '60px';
+  });
+  el.addEventListener('mouseleave', () => {
+    cursor.style.width = '12px';
+    cursor.style.height = '12px';
+    cursorRing.style.width = '36px';
+    cursorRing.style.height = '36px';
+  });
+});
+
+/* ============================================================
+   NAVBAR SCROLL + ACTIVE HIGHLIGHTING
+============================================================ */
+const navbar = document.getElementById('navbar');
+const navLinks = document.querySelectorAll('.nav-links a');
+const sections = document.querySelectorAll('section[id]');
+
+window.addEventListener('scroll', () => {
+  // Scrolled class
+  navbar.classList.toggle('scrolled', window.scrollY > 50);
+
+  // Back to top button
+  document.getElementById('back-top').classList.toggle('visible', window.scrollY > 400);
+
+  // Active nav link
+  let current = '';
+  sections.forEach(s => {
+    if (window.scrollY >= s.offsetTop - 120) current = s.id;
+  });
+  navLinks.forEach(a => {
+    a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+  });
+});
+
+/* ============================================================
+   MOBILE MENU
+============================================================ */
+function toggleMobile() {
+  const menu = document.getElementById('mobileMenu');
+  const ham  = document.getElementById('hamburger');
+  menu.classList.toggle('open');
+  ham.classList.toggle('open');
+}
+function closeMobile() {
+  document.getElementById('mobileMenu').classList.remove('open');
+  document.getElementById('hamburger').classList.remove('open');
+}
+
+/* ============================================================
+   THEME TOGGLE
+============================================================ */
+document.getElementById('themeToggle').addEventListener('click', () => {
+  document.body.classList.toggle('light-mode');
+});
+
+/* ============================================================
+   TYPING ANIMATION
+============================================================ */
+const typingEl = document.getElementById('typingText');
+const phrases = [
+  'Blogger',
+  'Thinker',
+  'Technology Learner',
+  'Creative Mind',
+  'Science Enthusiast',
+  'Digital Architect',
+  'Futurist'
+];
+let pIdx = 0, cIdx = 0, deleting = false;
+
+function typeEffect() {
+  const phrase = phrases[pIdx];
+  const displayText = deleting ? phrase.slice(0, cIdx--) : phrase.slice(0, cIdx++);
+  typingEl.innerHTML = displayText + '<span class="cursor-type"></span>';
+
+  let speed = deleting ? 50 : 100;
+  if (!deleting && cIdx > phrase.length) {
+    speed = 1800;
+    deleting = true;
+  } else if (deleting && cIdx < 0) {
+    deleting = false;
+    cIdx = 0;
+    pIdx = (pIdx + 1) % phrases.length;
+    speed = 400;
+  }
+  setTimeout(typeEffect, speed);
+}
+setTimeout(typeEffect, 2500);
+
+/* ============================================================
+   PARTICLE CANVAS
+============================================================ */
+const canvas = document.getElementById('particles-canvas');
+const ctx = canvas.getContext('2d');
+let W, H, particles = [];
+
+function resizeCanvas() {
+  W = canvas.width  = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+class Particle {
+  constructor() { this.reset(); }
+  reset() {
+    this.x = Math.random() * W;
+    this.y = Math.random() * H;
+    this.r = Math.random() * 1.5 + 0.3;
+    this.vx = (Math.random() - 0.5) * 0.3;
+    this.vy = (Math.random() - 0.5) * 0.3;
+    this.alpha = Math.random() * 0.5 + 0.1;
+    this.color = Math.random() > 0.5 ? '0,200,255' : '123,47,255';
+  }
+  update() {
+    this.x += this.vx; this.y += this.vy;
+    if (this.x < 0 || this.x > W || this.y < 0 || this.y > H) this.reset();
+  }
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(${this.color},${this.alpha})`;
+    ctx.fill();
+  }
+}
+
+for (let i = 0; i < 120; i++) particles.push(new Particle());
+
+function animateParticles() {
+  ctx.clearRect(0, 0, W, H);
+  particles.forEach(p => { p.update(); p.draw(); });
+
+  // Connect nearby particles
+  for (let i = 0; i < particles.length; i++) {
+    for (let j = i + 1; j < particles.length; j++) {
+      const dx = particles[i].x - particles[j].x;
+      const dy = particles[i].y - particles[j].y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < 100) {
+        ctx.beginPath();
+        ctx.moveTo(particles[i].x, particles[i].y);
+        ctx.lineTo(particles[j].x, particles[j].y);
+        ctx.strokeStyle = `rgba(0,200,255,${0.06 * (1 - dist / 100)})`;
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+      }
+    }
+  }
+  requestAnimationFrame(animateParticles);
+}
+animateParticles();
+
+/* ============================================================
+   SCROLL REVEAL
+============================================================ */
+const revealEls = document.querySelectorAll('.reveal');
+const revealObs = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) { e.target.classList.add('visible'); }
+  });
+}, { threshold: 0.12 });
+revealEls.forEach(el => revealObs.observe(el));
+
+/* ============================================================
+   ANIMATED COUNTERS
+============================================================ */
+const counters = document.querySelectorAll('.stat-number[data-target]');
+const counterObs = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting && !e.target.dataset.done) {
+      e.target.dataset.done = 1;
+      const target = +e.target.dataset.target;
+      const suffix = e.target.dataset.suffix || '';
+      let start = 0;
+      const duration = 1800;
+      const step = (timestamp) => {
+        if (!e.target._start) e.target._start = timestamp;
+        const progress = Math.min((timestamp - e.target._start) / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        e.target.textContent = Math.floor(eased * target) + suffix;
+        if (progress < 1) requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    }
+  });
+}, { threshold: 0.5 });
+counters.forEach(c => counterObs.observe(c));
+
+/* ============================================================
+   DEPARTMENT MODALS
+============================================================ */
+const modalData = {
+  science: {
+    icon: '🔬',
+    title: 'Science Department',
+    body: 'This is where curiosity meets rigour. I explore physics, cosmology, biology, chemistry and the grand unified theories that attempt to explain existence itself. Science isn\'t just a subject — it\'s a way of seeing the world with clear eyes. My science writing aims to make complex ideas accessible and awe-inspiring for everyone.',
+    tags: ['Physics', 'Cosmology', 'Biology', 'Chemistry', 'Neuroscience', 'Climate Science']
+  },
+  tech: {
+    icon: '⚙️',
+    title: 'Technology Department',
+    body: 'From artificial intelligence to web development, this department tracks the digital revolution that\'s reshaping civilization. I explore emerging technologies, write about their implications, and build things myself to understand them from the inside out. Technology is the most powerful force of our era — understanding it is not optional.',
+    tags: ['AI & ML', 'Web Dev', 'Cybersecurity', 'Blockchain', 'IoT', 'Open Source']
+  },
+  philosophy: {
+    icon: '🧠',
+    title: 'Philosophy Department',
+    body: 'What is consciousness? Do we have free will? What makes a life meaningful? Philosophy sits at the intersection of science, art, and lived experience. I engage with Stoicism, existentialism, epistemology, and ethics — not as abstract exercises, but as practical tools for living more intentionally and thinking more clearly.',
+    tags: ['Stoicism', 'Existentialism', 'Ethics', 'Epistemology', 'Consciousness', 'Logic']
+  },
+  writing: {
+    icon: '✍️',
+    title: 'Creative Writing',
+    body: 'Words are the most ancient technology humans possess. Creative writing — whether essays, short fiction, poetry, or philosophical dialogue — is where I experiment with ideas in their rawest form. This department is about finding the exact right words for the inexpressible, and exploring the human condition through narrative.',
+    tags: ['Essays', 'Short Fiction', 'Poetry', 'Narrative', 'Dialogue', 'Worldbuilding']
+  },
+  webdev: {
+    icon: '🌐',
+    title: 'Web Development',
+    body: 'The web is the most democratic publishing platform ever created. I\'m passionate about building beautiful, fast, and accessible digital experiences using HTML, CSS, and JavaScript. I believe great web design is invisible — it gets out of the way and lets ideas shine. Performance, accessibility, and aesthetics are equally important.',
+    tags: ['HTML5', 'CSS3', 'JavaScript', 'Responsive Design', 'UI/UX', 'Performance']
+  },
+  thoughts: {
+    icon: '💭',
+    title: 'Personal Thoughts',
+    body: 'This is the most honest corner of my digital world. Raw observations, personal reflections, lessons learned the hard way, and ideas that don\'t fit neatly into any other category. Here I write about growth, failure, relationships, purpose, and what it means to be a conscious being in a confusing world. No polish, just truth.',
+    tags: ['Self-Growth', 'Mindset', 'Observations', 'Reflections', 'Life Lessons', 'Purpose']
+  }
+};
+
+function openModal(key) {
+  const data = modalData[key];
+  document.getElementById('modalIcon').textContent = data.icon;
+  document.getElementById('modalTitle').textContent = data.title;
+  document.getElementById('modalBody').textContent = data.body;
+  const tagsEl = document.getElementById('modalTags');
+  tagsEl.innerHTML = data.tags.map(t => `<span class="tag">${t}</span>`).join('');
+  document.getElementById('deptModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('deptModal')) closeModalBtn();
+}
+function closeModalBtn() {
+  document.getElementById('deptModal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+/* ============================================================
+   GALLERY
+============================================================ */
+const galleryItems = [
+  { emoji: '🌌', title: 'The Cosmos', desc: 'Gazing at the universe through the lens of science and wonder.' },
+  { emoji: '💻', title: 'Late Night Code', desc: 'When the world sleeps, the code comes alive.' },
+  { emoji: '📚', title: 'The Library', desc: 'Every book is a portal to a different mind.' },
+  { emoji: '🧬', title: 'Life at Scale', desc: 'The machinery of biology is the most elegant engineering.' },
+  { emoji: '🌿', title: 'Nature\'s Algorithm', desc: 'Patterns in nature that inspired mathematics.' },
+  { emoji: '🤖', title: 'AI Frontiers', desc: 'Standing at the edge of artificial general intelligence.' },
+  { emoji: '⚡', title: 'Energy & Ideas', desc: 'The spark that turns a concept into reality.' },
+  { emoji: '🪐', title: 'Planetary Dreams', desc: 'The human species becoming multi-planetary.' },
+  { emoji: '🎨', title: 'Digital Art', desc: 'Where algorithms become aesthetics.' },
+];
+
+const galleryGrid = document.getElementById('galleryGrid');
+galleryItems.forEach((item, i) => {
+  const colors = [
+    ['#030b1a','#041a38'], ['#0a0515','#190533'], ['#0f1a08','#1a300c'],
+    ['#1a0808','#380a0a'], ['#0a1020','#0d1a3a'], ['#080a1a','#10153a'],
+    ['#001814','#003324'], ['#1a1208','#332408'], ['#0a0818','#15123a']
+  ];
+  const [c1,c2] = colors[i % colors.length];
+  const div = document.createElement('div');
+  div.className = 'gallery-item reveal';
+  div.style.transitionDelay = (i * 0.07) + 's';
+  div.innerHTML = `
+    <div class="gallery-inner" style="background:linear-gradient(135deg,${c1},${c2});">${item.emoji}</div>
+    <div class="gallery-overlay">🔍</div>
+  `;
+  div.addEventListener('click', () => openLightbox(item));
+  galleryGrid.appendChild(div);
+  revealObs.observe(div);
+});
+
+function openLightbox(item) {
+  document.getElementById('lbEmoji').textContent = item.emoji;
+  document.getElementById('lbTitle').textContent = item.title;
+  document.getElementById('lbDesc').textContent = item.desc;
+  document.getElementById('lightbox').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeLightbox(); closeModalBtn(); }
+});
+
+/* ============================================================
+   CONTACT FORM
+============================================================ */
+function submitForm() {
+  const name  = document.getElementById('inputName');
+  const email = document.getElementById('inputEmail');
+  const msg   = document.getElementById('inputMsg');
+  let valid = true;
+
+  // Validate name
+  const fgN = document.getElementById('fgName');
+  if (!name.value.trim()) { fgN.classList.add('error'); valid = false; }
+  else { fgN.classList.remove('error'); }
+
+  // Validate email
+  const fgE = document.getElementById('fgEmail');
+  const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRe.test(email.value.trim())) { fgE.classList.add('error'); valid = false; }
+  else { fgE.classList.remove('error'); }
+
+  // Validate message
+  const fgM = document.getElementById('fgMsg');
+  if (!msg.value.trim()) { fgM.classList.add('error'); valid = false; }
+  else { fgM.classList.remove('error'); }
+
+  if (!valid) return;
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = 'Sending...';
+
+  setTimeout(() => {
+    document.getElementById('contactForm').style.display = 'none';
+    document.getElementById('successMsg').classList.add('show');
+  }, 1600);
+}
+</script>
+</body>
+</html>
